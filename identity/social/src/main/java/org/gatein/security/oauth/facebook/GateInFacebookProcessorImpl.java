@@ -23,55 +23,52 @@
 
 package org.gatein.security.oauth.facebook;
 
-import org.exoplatform.container.ExoContainerContext;
-import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.services.organization.UserProfile;
-import org.exoplatform.web.security.security.SecureRandomService;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
 import org.gatein.security.oauth.common.InteractionState;
 import org.gatein.security.oauth.common.OAuthCodec;
 import org.gatein.security.oauth.common.OAuthConstants;
 import org.gatein.security.oauth.exception.OAuthException;
 import org.gatein.security.oauth.exception.OAuthExceptionCode;
-import org.gatein.security.oauth.social.FacebookPrincipal;
-import org.gatein.security.oauth.social.FacebookProcessor;
+import org.gatein.security.oauth.im.UserProfile;
+import org.gatein.security.oauth.common.SocialServiceConfiguration;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
 public class GateInFacebookProcessorImpl implements GateInFacebookProcessor {
 
-    private static Logger log = LoggerFactory.getLogger(GateInFacebookProcessorImpl.class);
+    private static Logger log = Logger.getLogger(GateInFacebookProcessorImpl.class.getName());
 
     private final String clientId;
     private final String clientSecret;
     private final String scope;
-    private final String redirectURL;
+    private final String redirectUrl;
     private final FacebookProcessor facebookProcessor;
-    private final SecureRandomService secureRandomService;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     // Only for unit test purpose
     public GateInFacebookProcessorImpl() {
         this.clientId = null;
         this.clientSecret = null;
         this.scope = null;
-        this.redirectURL = null;
+        this.redirectUrl = null;
         this.facebookProcessor = null;
-        this.secureRandomService = null;
     }
 
-    public GateInFacebookProcessorImpl(ExoContainerContext context, InitParams params, SecureRandomService secureRandomService) {
-        this.clientId = params.getValueParam("clientId").getValue();
-        this.clientSecret = params.getValueParam("clientSecret").getValue();
-        String scope = params.getValueParam("scope").getValue();
-        String redirectURL = params.getValueParam("redirectURL").getValue();
+    public GateInFacebookProcessorImpl(SocialServiceConfiguration config) {
+        this.clientId = config.getClientId();
+        this.clientSecret = config.getClientSecret();
+        this.redirectUrl = config.getRedirectUrl();
+
+        String scope = config.getScope();
 
         if (clientId == null || clientId.length() == 0 || clientId.trim().equals("<<to be replaced>>")) {
             throw new IllegalArgumentException("Property 'clientId' needs to be provided. The value should be " +
@@ -83,28 +80,25 @@ public class GateInFacebookProcessorImpl implements GateInFacebookProcessor {
                     "clientSecret of your Facebook application");
         }
 
-        this.scope = scope == null ? "email" : scope;
-
-        if (redirectURL == null || redirectURL.length() == 0) {
-            this.redirectURL = "http://localhost:8080/" + context.getName() + OAuthConstants.FACEBOOK_AUTHENTICATION_URL_PATH;
-        }  else {
-            this.redirectURL = redirectURL.replaceAll("@@portal.container.name@@", context.getName());
+        if (redirectUrl == null || redirectUrl.length() == 0 || redirectUrl.trim().equals("<<to be replaced>>")) {
+            throw new IllegalArgumentException("Property 'redirectUrl' needs to be provided.");
         }
 
-        log.debug("configuration: clientId=" + this.clientId +
-                ", clientSecret=" + clientSecret +
-                ", scope=" + this.scope +
-                ", redirectURL=" + this.redirectURL);
+        this.scope = scope == null ? "email" : scope;
+
+        log.fine("configuration: clientId=" + this.clientId +
+            ", clientSecret=" + clientSecret +
+            ", scope=" + this.scope +
+            ", redirectUrl=" + this.redirectUrl);
 
         // Use empty rolesList because we don't need rolesList for GateIn integration
-        this.facebookProcessor = new FacebookProcessor(this.clientId , this.clientSecret, this.scope, this.redirectURL);
-        this.secureRandomService = secureRandomService;
+        this.facebookProcessor = new FacebookProcessor(this.clientId , this.clientSecret, this.scope, this.redirectUrl);
     }
 
     @Override
     public InteractionState<FacebookAccessTokenContext> processOAuthInteraction(HttpServletRequest httpRequest, HttpServletResponse httpResponse, String scope) throws IOException
     {
-        return processOAuthInteractionImpl(httpRequest, httpResponse, new FacebookProcessor(this.clientId, this.clientSecret, scope, this.redirectURL));
+        return processOAuthInteractionImpl(httpRequest, httpResponse, new FacebookProcessor(this.clientId, this.clientSecret, scope, this.redirectUrl));
     }
 
 
@@ -120,13 +114,13 @@ public class GateInFacebookProcessorImpl implements GateInFacebookProcessor {
         HttpSession session = httpRequest.getSession();
         String state = (String) session.getAttribute(OAuthConstants.ATTRIBUTE_AUTH_STATE);
 
-        if (log.isTraceEnabled()) {
-            log.trace("state=" + state);
+        if (log.isLoggable(Level.FINEST)) {
+            log.finest("state=" + state);
         }
 
         // Very initial request to portal
         if (state == null || state.isEmpty()) {
-            String verificationState = String.valueOf(secureRandomService.getSecureRandom().nextLong());
+            String verificationState = String.valueOf(secureRandom.nextLong());
             facebookProcessor.initialInteraction(httpRequest, httpResponse, verificationState);
             state = InteractionState.State.AUTH.name();
             session.setAttribute(OAuthConstants.ATTRIBUTE_AUTH_STATE, state);

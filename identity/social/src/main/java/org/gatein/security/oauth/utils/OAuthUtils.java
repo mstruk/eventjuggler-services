@@ -24,15 +24,14 @@
 package org.gatein.security.oauth.utils;
 
 import com.google.api.services.oauth2.model.Userinfo;
-import org.exoplatform.services.organization.User;
-import org.exoplatform.services.organization.impl.UserImpl;
+import org.eventjuggler.services.simpleim.rest.User;
 import org.gatein.security.oauth.common.OAuthPrincipal;
 import org.gatein.security.oauth.common.OAuthProviderType;
 import org.gatein.security.oauth.exception.OAuthException;
 import org.gatein.security.oauth.exception.OAuthExceptionCode;
 import org.gatein.security.oauth.facebook.FacebookAccessTokenContext;
 import org.gatein.security.oauth.google.GoogleAccessTokenContext;
-import org.gatein.security.oauth.social.FacebookPrincipal;
+import org.gatein.security.oauth.facebook.FacebookPrincipal;
 import org.gatein.security.oauth.twitter.TwitterAccessTokenContext;
 
 import java.io.IOException;
@@ -89,7 +88,8 @@ public class OAuthUtils {
     }
 
     public static User convertOAuthPrincipalToGateInUser(OAuthPrincipal principal) {
-        User gateinUser = new UserImpl(principal.getUserName());
+        User gateinUser = new User();
+        gateinUser.setUserId(principal.getUserName());
         gateinUser.setFirstName(principal.getFirstName());
         gateinUser.setLastName(principal.getLastName());
         gateinUser.setEmail(principal.getEmail());

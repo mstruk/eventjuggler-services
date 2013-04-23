@@ -23,8 +23,6 @@
 
 package org.gatein.security.oauth.common;
 
-import org.exoplatform.commons.utils.Safe;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.HashSet;
@@ -34,8 +32,7 @@ import java.util.Set;
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
-public abstract class AccessTokenContext implements Serializable
-{
+public abstract class AccessTokenContext implements Serializable {
 
     private static final long serialVersionUID = -7034897192745766989L;
     public static final String DELIMITER = " ";
@@ -108,7 +105,7 @@ public abstract class AccessTokenContext implements Serializable
         }
 
         AccessTokenContext thatt = (AccessTokenContext)that;
-        return Safe.equals(this.scopes, thatt.scopes);
+        return this.scopes == thatt.scopes || this.scopes != null && this.scopes.equals(thatt.scopes);
     }
 
     @Override

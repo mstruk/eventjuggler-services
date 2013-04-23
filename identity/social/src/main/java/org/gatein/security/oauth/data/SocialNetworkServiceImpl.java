@@ -23,37 +23,31 @@
 
 package org.gatein.security.oauth.data;
 
-import org.exoplatform.services.organization.OrganizationService;
-import org.exoplatform.services.organization.User;
-import org.exoplatform.services.organization.UserHandler;
-import org.exoplatform.services.organization.UserProfile;
-import org.exoplatform.services.organization.UserProfileHandler;
-import org.exoplatform.web.security.codec.AbstractCodec;
-import org.exoplatform.web.security.codec.CodecInitializer;
-import org.exoplatform.web.security.security.TokenServiceInitializationException;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
+import org.eventjuggler.services.simpleim.rest.User;
 import org.gatein.security.oauth.common.AccessTokenContext;
 import org.gatein.security.oauth.common.OAuthCodec;
 import org.gatein.security.oauth.common.OAuthProviderProcessor;
 import org.gatein.security.oauth.common.OAuthProviderType;
 import org.gatein.security.oauth.exception.OAuthException;
+import org.gatein.security.oauth.im.OrganizationService;
+import org.gatein.security.oauth.im.UserHandler;
+import org.gatein.security.oauth.im.UserProfile;
+import org.gatein.security.oauth.im.UserProfileHandler;
 
 import java.lang.reflect.Method;
+import java.util.logging.Logger;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
 public class SocialNetworkServiceImpl implements SocialNetworkService, OAuthCodec {
 
-    private static Logger log = LoggerFactory.getLogger(SocialNetworkServiceImpl.class);
+    private static Logger log = Logger.getLogger(SocialNetworkServiceImpl.class.getName());
 
     private OrganizationService orgService;
-    private AbstractCodec codec;
 
-    public SocialNetworkServiceImpl(OrganizationService orgService, CodecInitializer codecInitializer) throws TokenServiceInitializationException {
+    public SocialNetworkServiceImpl(OrganizationService orgService) {
         this.orgService = orgService;
-        this.codec = codecInitializer.initCodec();
     }
 
     @Override
@@ -67,7 +61,7 @@ public class SocialNetworkServiceImpl implements SocialNetworkService, OAuthCode
         } catch (NoSuchMethodException e) {
             String error = "Method findUserByUniqueAttribute(String, String) is not available on userHandler object " + userHandler +
                     "of class " + userHandler.getClass();
-            log.error(error);
+            log.severe(error);
             throw new RuntimeException(error, e);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -139,20 +133,12 @@ public class SocialNetworkServiceImpl implements SocialNetworkService, OAuthCode
 
     @Override
     public String encodeString(String input) {
-        if (input == null) {
-            return null;
-        } else {
-            return codec.encode(input);
-        }
+        return input;
     }
 
     @Override
     public String decodeString(String input) {
-        if (input == null) {
-            return null;
-        } else {
-            return codec.decode(input);
-        }
+        return input;
     }
 
 }

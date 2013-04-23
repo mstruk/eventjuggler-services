@@ -24,7 +24,6 @@
 package org.gatein.security.oauth.facebook;
 
 import org.gatein.security.oauth.common.OAuthProviderProcessor;
-import org.gatein.security.oauth.social.FacebookPrincipal;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>

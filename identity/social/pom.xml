@@ -30,11 +30,42 @@
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>ejs-identity-facebook</artifactId>
-    <name>Facebook Identity Impl</name>
+    <artifactId>ejs-identity-social</artifactId>
+    <name>Identity Social Impl</name>
 
     <packaging>jar</packaging>
 
+    <properties>
+        <version.twitter4j>2.2.6</version.twitter4j>
+        <version.google.api.services.oauth>v2-rev32-1.14.1-beta</version.google.api.services.oauth>
+        <version.google.api.services.plus>v1-rev64-1.14.1-beta</version.google.api.services.plus>
+        <version.google.http.client.jackson>1.14.1-beta</version.google.http.client.jackson>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.twitter4j</groupId>
+                <artifactId>twitter4j-core</artifactId>
+                <version>${version.twitter4j}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.apis</groupId>
+                <artifactId>google-api-services-oauth2</artifactId>
+                <version>${version.google.api.services.oauth}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.apis</groupId>
+                <artifactId>google-api-services-plus</artifactId>
+                <version>${version.google.api.services.plus}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.http-client</groupId>
+                <artifactId>google-http-client-jackson</artifactId>
+                <version>${version.google.http.client.jackson}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.eventjuggler.services</groupId>
@@ -71,9 +102,34 @@
             <artifactId>resteasy-jaxrs</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jboss.spec.javax.servlet</groupId>
+            <artifactId>jboss-servlet-api_3.0_spec</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.twitter4j</groupId>
+            <artifactId>twitter4j-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-oauth2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-plus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client-jackson</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
-        <finalName>ejs-identity-facebook</finalName>
+        <finalName>ejs-identity-social</finalName>
     </build>
 </project>

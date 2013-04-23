@@ -24,16 +24,13 @@
 package org.gatein.security.oauth.twitter;
 
 
-import org.exoplatform.container.ExoContainerContext;
-import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.services.organization.UserProfile;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
 import org.gatein.security.oauth.common.InteractionState;
 import org.gatein.security.oauth.common.OAuthCodec;
 import org.gatein.security.oauth.common.OAuthConstants;
 import org.gatein.security.oauth.exception.OAuthException;
 import org.gatein.security.oauth.exception.OAuthExceptionCode;
+import org.gatein.security.oauth.im.UserProfile;
+import org.gatein.security.oauth.common.SocialServiceConfiguration;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
@@ -45,24 +42,25 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
-public class TwitterProcessorImpl implements TwitterProcessor
-{
+public class TwitterProcessorImpl implements TwitterProcessor {
 
-    private static Logger log = LoggerFactory.getLogger(TwitterProcessorImpl.class);
+    private static Logger log = Logger.getLogger(TwitterProcessorImpl.class.getName());
 
-    private final String redirectURL;
+    private final String redirectUrl;
     private final String clientID;
     private final String clientSecret;
     private final TwitterFactory twitterFactory;
 
-    public TwitterProcessorImpl(ExoContainerContext context, InitParams params) {
-        this.clientID = params.getValueParam("clientId").getValue();
-        this.clientSecret = params.getValueParam("clientSecret").getValue();
-        String redirectURLParam = params.getValueParam("redirectURL").getValue();
+    public TwitterProcessorImpl(SocialServiceConfiguration conf) {
+        this.clientID = conf.getClientId();
+        this.clientSecret = conf.getClientSecret();
+        this.redirectUrl = conf.getRedirectUrl();
 
         if (clientID == null || clientID.length() == 0 || clientID.trim().equals("<<to be replaced>>")) {
             throw new IllegalArgumentException("Property 'clientId' needs to be provided. The value should be " +
@@ -74,15 +72,14 @@ public class TwitterProcessorImpl implements TwitterProcessor
                     "clientSecret of your Twitter application");
         }
 
-        if (redirectURLParam == null || redirectURLParam.length() == 0) {
-            this.redirectURL = "http://localhost:8080/" + context.getName() + OAuthConstants.TWITTER_AUTHENTICATION_URL_PATH;
-        }  else {
-            this.redirectURL = redirectURLParam.replaceAll("@@portal.container.name@@", context.getName());
+        if (redirectUrl == null || redirectUrl.length() == 0 || redirectUrl.trim().equals("<<to be replaced>>")) {
+            throw new IllegalArgumentException("Property 'redirectUrl' needs to be provided.");
         }
 
-        log.debug("configuration: clientId=" + clientID +
-                ", clientSecret=" + clientSecret +
-                ", redirectURL=" + redirectURL);
+
+        log.fine("configuration: clientId=" + clientID +
+            ", clientSecret=" + clientSecret +
+            ", redirectUrl=" + redirectUrl);
 
         // Create 'generic' twitterFactory for user authentication to GateIn
         ConfigurationBuilder builder = new ConfigurationBuilder();
@@ -92,8 +89,7 @@ public class TwitterProcessorImpl implements TwitterProcessor
 
     @Override
     public InteractionState<TwitterAccessTokenContext> processOAuthInteraction(HttpServletRequest request, HttpServletResponse response) throws
-       IOException, OAuthException
-    {
+       IOException, OAuthException {
         Twitter twitter = twitterFactory.getInstance();
 
         HttpSession session = request.getSession();
@@ -103,13 +99,13 @@ public class TwitterProcessorImpl implements TwitterProcessor
 
         try {
             if (requestToken == null) {
-                requestToken = twitter.getOAuthRequestToken(redirectURL);
+                requestToken = twitter.getOAuthRequestToken(redirectUrl);
 
                 // Save requestToken to session, but only temporarily until oauth workflow is finished
                 session.setAttribute(OAuthConstants.ATTRIBUTE_TWITTER_REQUEST_TOKEN, requestToken);
 
-                if (log.isTraceEnabled()) {
-                    log.trace("RequestToken obtained from twitter. Redirecting to Twitter for authorization");
+                if (log.isLoggable(Level.FINEST)) {
+                    log.finest("RequestToken obtained from twitter. Redirecting to Twitter for authorization");
                 }
 
                 // Redirect to twitter to perform authentication
@@ -122,8 +118,8 @@ public class TwitterProcessorImpl implements TwitterProcessor
                 // Obtain accessToken from twitter
                 AccessToken accessToken = twitter.getOAuthAccessToken(requestToken, verifier);
 
-                if (log.isTraceEnabled()) {
-                    log.trace("Twitter accessToken: " + accessToken);
+                if (log.isLoggable(Level.FINEST)) {
+                    log.finest("Twitter accessToken: " + accessToken);
                 }
 
                 // Remove requestToken from session. We don't need it anymore
@@ -138,9 +134,8 @@ public class TwitterProcessorImpl implements TwitterProcessor
     }
 
     @Override
-    public InteractionState<TwitterAccessTokenContext> processOAuthInteraction(HttpServletRequest httpRequest, HttpServletResponse httpResponse, String scope) throws IOException, OAuthException
-    {
-        throw new OAuthException(OAuthExceptionCode.EXCEPTION_CODE_TWITTER_ERROR, "Thsi is currently not supported for Twitter");
+    public InteractionState<TwitterAccessTokenContext> processOAuthInteraction(HttpServletRequest httpRequest, HttpServletResponse httpResponse, String scope) throws IOException, OAuthException {
+        throw new OAuthException(OAuthExceptionCode.EXCEPTION_CODE_TWITTER_ERROR, "This is currently not supported for Twitter");
     }
 
     @Override
@@ -178,8 +173,7 @@ public class TwitterProcessorImpl implements TwitterProcessor
 
 
     @Override
-    public TwitterAccessTokenContext validateTokenAndUpdateScopes(TwitterAccessTokenContext accessToken) throws OAuthException
-    {
+    public TwitterAccessTokenContext validateTokenAndUpdateScopes(TwitterAccessTokenContext accessToken) throws OAuthException {
         try {
             // Perform validation by obtaining some info about user
             Twitter twitter = getAuthorizedTwitterInstance(accessToken);

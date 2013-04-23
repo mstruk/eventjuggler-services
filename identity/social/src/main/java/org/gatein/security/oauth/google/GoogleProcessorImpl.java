@@ -37,41 +37,38 @@ import com.google.api.services.oauth2.Oauth2;
 import com.google.api.services.oauth2.model.Tokeninfo;
 import com.google.api.services.oauth2.model.Userinfo;
 import com.google.api.services.plus.Plus;
-import org.exoplatform.container.ExoContainerContext;
-import org.exoplatform.container.xml.InitParams;
-import org.exoplatform.container.xml.ValueParam;
-import org.exoplatform.services.organization.UserProfile;
-import org.exoplatform.web.security.security.SecureRandomService;
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
 import org.gatein.security.oauth.common.InteractionState;
 import org.gatein.security.oauth.common.OAuthCodec;
 import org.gatein.security.oauth.common.OAuthConstants;
 import org.gatein.security.oauth.exception.OAuthException;
 import org.gatein.security.oauth.exception.OAuthExceptionCode;
+import org.gatein.security.oauth.im.UserProfile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author <a href="mailto:mposolda@redhat.com">Marek Posolda</a>
  */
 public class GoogleProcessorImpl implements GoogleProcessor {
 
-    private static Logger log = LoggerFactory.getLogger(GoogleProcessorImpl.class);
+    private static Logger log = Logger.getLogger(GoogleProcessorImpl.class.getName());
 
-    private final String redirectURL;
+    private final String redirectUrl;
     private final String clientID;
     private final String clientSecret;
     private final Set<String> scopes = new HashSet<String>();
     private final String accessType;
     private final String applicationName;
 
-    private final SecureRandomService secureRandomService;
+    private final SecureRandom secureRandom = new SecureRandom();
 
     /**
      * Default HTTP transport to use to make HTTP requests.
@@ -85,26 +82,21 @@ public class GoogleProcessorImpl implements GoogleProcessor {
 
     // Only for unit test purpose
     public GoogleProcessorImpl() {
-        this.redirectURL = null;
+        this.redirectUrl = null;
         this.clientID = null;
         this.clientSecret = null;
         this.accessType = null;
         this.applicationName = null;
-        this.secureRandomService = null;
     }
 
-    public GoogleProcessorImpl(ExoContainerContext context, InitParams params, SecureRandomService secureRandomService) {
-        this.clientID = params.getValueParam("clientId").getValue();
-        this.clientSecret = params.getValueParam("clientSecret").getValue();
-        String redirectURLParam = params.getValueParam("redirectURL").getValue();
-        String scope = params.getValueParam("scope").getValue();
-        this.accessType = params.getValueParam("accessType").getValue();
-        ValueParam appNameParam = params.getValueParam("applicationName");
-        if (appNameParam != null && appNameParam.getValue() != null) {
-            applicationName = appNameParam.getValue();
-        } else {
-            applicationName = "GateIn portal";
-        }
+    public GoogleProcessorImpl(GoogleConfiguration conf) {
+        this.clientID = conf.getClientId();
+        this.clientSecret = conf.getClientSecret();
+        this.redirectUrl = conf.getRedirectUrl();
+        String scope = conf.getScope();
+
+        this.accessType = conf.getAccessType();
+        this.applicationName = conf.getApplicationName();
 
         if (clientID == null || clientID.length() == 0 || clientID.trim().equals("<<to be replaced>>")) {
             throw new IllegalArgumentException("Property 'clientId' needs to be provided. The value should be " +
@@ -116,42 +108,38 @@ public class GoogleProcessorImpl implements GoogleProcessor {
                     "clientSecret of your Google application");
         }
 
+        if (redirectUrl == null || redirectUrl.length() == 0) {
+            throw new IllegalArgumentException("Property 'redirectUrl' needs to be provided.");
+        }
 
-        if (redirectURLParam == null || redirectURLParam.length() == 0) {
-            this.redirectURL = "http://localhost:8080/" + context.getName() + OAuthConstants.GOOGLE_AUTHENTICATION_URL_PATH;
-        }  else {
-            this.redirectURL = redirectURLParam.replaceAll("@@portal.container.name@@", context.getName());
+        if (applicationName == null || applicationName.length() == 0) {
+            throw new IllegalArgumentException("Property 'applicationName' needs to be provided.");
         }
 
         addScopesFromString(scope, this.scopes);
 
-        log.debug("configuration: clientId=" + clientID +
-                ", clientSecret=" + clientSecret +
-                ", redirectURL=" + redirectURL +
-                ", scope=" + scopes +
-                ", accessType=" + accessType +
-                ", applicationName=" + applicationName);
-
-        this.secureRandomService = secureRandomService;
+        log.fine("configuration: clientId=" + clientID +
+            ", clientSecret=" + clientSecret +
+            ", redirectUrl=" + redirectUrl +
+            ", scope=" + scopes +
+            ", accessType=" + accessType +
+            ", applicationName=" + applicationName);
     }
 
     @Override
-    public InteractionState<GoogleAccessTokenContext> processOAuthInteraction(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, OAuthException
-    {
+    public InteractionState<GoogleAccessTokenContext> processOAuthInteraction(HttpServletRequest httpRequest, HttpServletResponse httpResponse) throws IOException, OAuthException {
         return processOAuthInteractionImpl(httpRequest, httpResponse, this.scopes);
     }
 
     @Override
-    public InteractionState<GoogleAccessTokenContext> processOAuthInteraction(HttpServletRequest httpRequest, HttpServletResponse httpResponse, String scope) throws IOException, OAuthException
-    {
+    public InteractionState<GoogleAccessTokenContext> processOAuthInteraction(HttpServletRequest httpRequest, HttpServletResponse httpResponse, String scope) throws IOException, OAuthException {
         Set<String> scopes = new HashSet<String>();
         addScopesFromString(scope, scopes);
         return processOAuthInteractionImpl(httpRequest, httpResponse, scopes);
     }
 
     protected InteractionState<GoogleAccessTokenContext> processOAuthInteractionImpl(HttpServletRequest request, HttpServletResponse response, Set<String> scopes)
-            throws IOException
-    {
+            throws IOException {
         HttpSession session = request.getSession();
         String state = (String) session.getAttribute(OAuthConstants.ATTRIBUTE_AUTH_STATE);
 
@@ -174,14 +162,13 @@ public class GoogleProcessorImpl implements GoogleProcessor {
         return new InteractionState<GoogleAccessTokenContext>(InteractionState.State.valueOf(state), null);
     }
 
-    protected InteractionState<GoogleAccessTokenContext> initialInteraction(HttpServletRequest request, HttpServletResponse response, Set<String> scopes) throws IOException
-    {
-        String verificationState = String.valueOf(secureRandomService.getSecureRandom().nextLong());
-        String authorizeUrl = new GoogleAuthorizationCodeRequestUrl(clientID, redirectURL, scopes).
+    protected InteractionState<GoogleAccessTokenContext> initialInteraction(HttpServletRequest request, HttpServletResponse response, Set<String> scopes) throws IOException {
+        String verificationState = String.valueOf(secureRandom.nextLong());
+        String authorizeUrl = new GoogleAuthorizationCodeRequestUrl(clientID, redirectUrl, scopes).
                 setState(verificationState).setAccessType(accessType).build();
-        if (log.isTraceEnabled()) {
-            log.trace("Starting OAuth2 interaction with Google+");
-            log.trace("URL to send to Google+: " + authorizeUrl);
+        if (log.isLoggable(Level.FINEST)) {
+            log.finest("Starting OAuth2 interaction with Google+");
+            log.finest("URL to send to Google+: " + authorizeUrl);
         }
 
         HttpSession session = request.getSession();
@@ -191,8 +178,7 @@ public class GoogleProcessorImpl implements GoogleProcessor {
         return new InteractionState<GoogleAccessTokenContext>(InteractionState.State.AUTH, null);
     }
 
-    protected GoogleTokenResponse obtainAccessToken(HttpServletRequest request) throws IOException
-    {
+    protected GoogleTokenResponse obtainAccessToken(HttpServletRequest request) throws IOException {
         HttpSession session = request.getSession();
         String stateFromSession = (String)session.getAttribute(OAuthConstants.ATTRIBUTE_VERIFICATION_STATE);
         String stateFromRequest = request.getParameter(OAuthConstants.STATE_PARAMETER);
@@ -204,10 +190,10 @@ public class GoogleProcessorImpl implements GoogleProcessor {
         String code = request.getParameter(OAuthConstants.CODE_PARAMETER);
 
         GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(TRANSPORT, JSON_FACTORY, clientID,
-                clientSecret, code, redirectURL).execute();
+                clientSecret, code, redirectUrl).execute();
 
-        if (log.isTraceEnabled()) {
-            log.trace("Successfully obtained accessToken from google: " + tokenResponse);
+        if (log.isLoggable(Level.FINEST)) {
+            log.finest("Successfully obtained accessToken from google: " + tokenResponse);
         }
 
         return tokenResponse;
@@ -240,8 +226,8 @@ public class GoogleProcessorImpl implements GoogleProcessor {
             throw new OAuthException(OAuthExceptionCode.EXCEPTION_CODE_GOOGLE_ERROR, "Token's client ID does not match app's. clientID from tokenINFO: " + tokenInfo.getIssuedTo());
         }
 
-        if (log.isTraceEnabled()) {
-            log.trace("Successfully validated accessToken from google: " + tokenInfo);
+        if (log.isLoggable(Level.FINEST)) {
+            log.finest("Successfully validated accessToken from google: " + tokenInfo);
         }
 
         String[] scopes = tokenInfo.getScope().split(" ");
@@ -259,8 +245,8 @@ public class GoogleProcessorImpl implements GoogleProcessor {
             throw new OAuthException(OAuthExceptionCode.EXCEPTION_CODE_GOOGLE_ERROR, "Error when obtaining User Info");
         }
 
-        if (log.isTraceEnabled()) {
-            log.trace("Successfully obtained userInfo from google: " + uinfo);
+        if (log.isLoggable(Level.FINEST)) {
+            log.finest("Successfully obtained userInfo from google: " + uinfo);
         }
 
         return uinfo;
@@ -358,8 +344,8 @@ public class GoogleProcessorImpl implements GoogleProcessor {
                         return;
                     } catch (OAuthException refreshException) {
                         // Log this one with trace level. We will rethrow original exception
-                        if (log.isTraceEnabled()) {
-                            log.trace("Refreshing token failed", refreshException);
+                        if (log.isLoggable(Level.FINEST)) {
+                            log.log(Level.FINEST, "Refreshing token failed", refreshException);
                         }
                     } catch (IOException ioe2) {
                         ioe = ioe2;
@@ -371,12 +357,11 @@ public class GoogleProcessorImpl implements GoogleProcessor {
     }
 
     // Send request to google without any exception handling.
-    private void revokeTokenImpl(GoogleTokenResponse tokenData) throws IOException
-    {
+    private void revokeTokenImpl(GoogleTokenResponse tokenData) throws IOException {
         TRANSPORT.createRequestFactory()
                 .buildGetRequest(new GenericUrl("https://accounts.google.com/o/oauth2/revoke?token=" + tokenData.getAccessToken())).execute();
-        if (log.isTraceEnabled()) {
-            log.trace("Revoked token " + tokenData);
+        if (log.isLoggable(Level.FINEST)) {
+            log.finest("Revoked token " + tokenData);
         }
     }
 
@@ -395,8 +380,8 @@ public class GoogleProcessorImpl implements GoogleProcessor {
             // Update only 'accessToken' with new value
             tokenData.setAccessToken(refreshed.getAccessToken());
 
-            if (log.isTraceEnabled()) {
-                log.trace("AccessToken refreshed successfully with value " + refreshed.getAccessToken());
+            if (log.isLoggable(Level.FINEST)) {
+                log.finest("AccessToken refreshed successfully with value " + refreshed.getAccessToken());
             }
         } catch (IOException ioe) {
             throw new OAuthException(OAuthExceptionCode.EXCEPTION_CODE_GOOGLE_ERROR, ioe);

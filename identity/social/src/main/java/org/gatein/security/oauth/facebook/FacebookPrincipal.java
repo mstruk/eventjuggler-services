@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gatein.security.oauth.social;
+package org.gatein.security.oauth.facebook;
 
 import org.json.JSONObject;
 
@@ -28,8 +28,7 @@ import java.security.Principal;
  * @author Marcel Kolsteren
  * @since Sep 26, 2010
  */
-public class FacebookPrincipal implements Principal, Serializable
-{
+public class FacebookPrincipal implements Principal, Serializable {
     private static final long serialVersionUID = 8086364702249670998L;
 
     private String accessToken;

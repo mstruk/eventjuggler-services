@@ -23,7 +23,7 @@
 
 package org.gatein.security.oauth.data;
 
-import org.exoplatform.services.organization.User;
+import org.eventjuggler.services.simpleim.rest.User;
 import org.gatein.security.oauth.common.AccessTokenContext;
 import org.gatein.security.oauth.common.OAuthProviderType;
 

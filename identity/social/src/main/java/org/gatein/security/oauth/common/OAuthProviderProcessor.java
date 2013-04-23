@@ -23,8 +23,8 @@
 
 package org.gatein.security.oauth.common;
 
-import org.exoplatform.services.organization.UserProfile;
 import org.gatein.security.oauth.exception.OAuthException;
+import org.gatein.security.oauth.im.UserProfile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;

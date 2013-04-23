@@ -15,10 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.gatein.security.oauth.social;
+package org.gatein.security.oauth.facebook;
 
-import org.gatein.common.logging.Logger;
-import org.gatein.common.logging.LoggerFactory;
 import org.gatein.security.oauth.common.OAuthConstants;
 import org.gatein.security.oauth.exception.OAuthException;
 import org.gatein.security.oauth.exception.OAuthExceptionCode;
@@ -37,6 +35,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Processor to perform Facebook interaction
@@ -46,9 +46,9 @@ import java.util.Set;
  */
 public class FacebookProcessor {
 
-    private static Logger log = LoggerFactory.getLogger(FacebookProcessor.class);
+    private static Logger log = Logger.getLogger(FacebookProcessor.class.getName());
 
-    protected boolean trace = log.isTraceEnabled();
+    protected boolean trace = log.isLoggable(Level.FINEST);
 
 
     protected String clientID;
@@ -80,7 +80,7 @@ public class FacebookProcessor {
                 .toString();
         try {
             if (trace)
-                log.trace("Redirect:" + location);
+                log.finest("Redirect:" + location);
             response.sendRedirect(location);
             return false;
         } catch (IOException e) {
@@ -100,7 +100,7 @@ public class FacebookProcessor {
         } else {
             String authorizationCode = request.getParameter(OAuthConstants.CODE_PARAMETER);
             if (authorizationCode == null) {
-                log.error("Authorization code parameter not found");
+                log.severe("Authorization code parameter not found");
                 return null;
             }
 
@@ -124,7 +124,7 @@ public class FacebookProcessor {
             String expires = params.get(FacebookConstants.EXPIRES);
 
             if (trace)
-                log.trace("Access Token=" + accessToken + " :: Expires=" + expires);
+                log.finest("Access Token=" + accessToken + " :: Expires=" + expires);
 
             return accessToken;
         }
@@ -144,7 +144,7 @@ public class FacebookProcessor {
 
         try {
             if (trace)
-                log.trace("AccessToken Request=" + location);
+                log.finest("AccessToken Request=" + location);
             URL url = new URL(location);
             URLConnection connection = url.openConnection();
             return connection;
@@ -158,7 +158,7 @@ public class FacebookProcessor {
             String urlString = new StringBuilder(FacebookConstants.PROFILE_ENDPOINT_URL).append("/permissions").append("?access_token=")
                     .append(URLEncoder.encode(accessToken, "UTF-8")).toString();
             if (trace)
-                log.trace("Read info about available scopes:" + urlString);
+                log.finest("Read info about available scopes:" + urlString);
 
             URL scopeUrl = new URL(urlString);
             String scopeContent = OAuthUtils.readUrlContent(scopeUrl.openConnection());
@@ -193,7 +193,7 @@ public class FacebookProcessor {
             String urlString = new StringBuilder(FacebookConstants.PROFILE_ENDPOINT_URL).append("?access_token=")
                     .append(URLEncoder.encode(accessToken, "UTF-8")).toString();
             if (trace)
-                log.trace("Profile read:" + urlString);
+                log.finest("Profile read:" + urlString);
 
             URL profileUrl = new URL(urlString);
             String profileContent = OAuthUtils.readUrlContent(profileUrl.openConnection());
@@ -226,8 +226,8 @@ public class FacebookProcessor {
                     .append(URLEncoder.encode(accessToken, "UTF-8")).append("&method=delete").toString();
             URL revokeUrl = new URL(urlString);
             String revokeContent = OAuthUtils.readUrlContent(revokeUrl.openConnection());
-            if (log.isTraceEnabled()) {
-                log.trace("Successfully revoked facebook accessToken " + accessToken + ", revokeContent=" + revokeContent);
+            if (trace) {
+                log.finest("Successfully revoked facebook accessToken " + accessToken + ", revokeContent=" + revokeContent);
             }
         } catch (IOException ioe) {
             throw new OAuthException(OAuthExceptionCode.EXCEPTION_CODE_TOKEN_REVOKE_FAILED, "Error when revoking token", ioe);
