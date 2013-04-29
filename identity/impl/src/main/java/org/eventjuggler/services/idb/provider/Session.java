@@ -1,13 +1,14 @@
 package org.eventjuggler.services.idb.provider;
 
 import javax.enterprise.context.SessionScoped;
+import java.io.Serializable;
 import java.util.UUID;
 
 /**
  * @author <a href="mailto:marko.strukelj@gmail.com">Marko Strukelj</a>
  */
 @SessionScoped
-class Session {
+class Session implements Serializable {
 
     private String code;
 
