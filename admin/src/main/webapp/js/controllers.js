@@ -22,11 +22,13 @@ function ApplicationListCtrl($scope, applications) {
     $scope.applications = applications;
 }
 
-function ApplicationDetailCtrl($scope, applications, application, Application, realms, providers, $location) {
+function ApplicationDetailCtrl($scope, applications, application, Application, realms, providers, $location, $window) {
     $scope.application = angular.copy(application);
     $scope.applications = applications;
     $scope.realms = realms;
     $scope.providers = providers;
+    
+    $scope.callbackUrl = $window.location.origin + "/ejs-identity/api/callback/" + application.key;
 
     $scope.create = !application.key;
 
@@ -116,6 +118,18 @@ function ApplicationDetailCtrl($scope, applications, application, Application, r
                 $scope.availableProviders.push($scope.providers[i]);
             }
         }
+    };
+    
+    $scope.openHelp = function(i) {
+        $scope.providerHelpModal = true;
+        $scope.providerHelp = {};
+        $scope.providerHelp.index = i;
+        $scope.providerHelp.description = $scope.getProviderDescription($scope.application.providers[i].providerId);
+    };
+    
+    $scope.closeHelp = function() {
+        $scope.providerHelpModal = false; 
+        $scope.providerHelp = null;
     };
 
     $scope.$watch("providers.length + application.providers.length", updateAvailableProviders);

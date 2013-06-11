@@ -1,2 +1,3 @@
 org.eventjuggler.services.idb.provider.DummyProvider
 org.eventjuggler.services.idb.provider.GoogleProvider
+org.eventjuggler.services.idb.provider.TwitterProvider

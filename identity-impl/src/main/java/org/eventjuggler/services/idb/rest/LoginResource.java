@@ -51,6 +51,7 @@ import org.eventjuggler.services.idb.model.IdentityProviderConfig;
 import org.eventjuggler.services.idb.provider.IdentityProvider;
 import org.eventjuggler.services.idb.provider.IdentityProviderCallback;
 import org.eventjuggler.services.idb.provider.IdentityProviderBean;
+import org.eventjuggler.services.idb.provider.IdentityProviderStateBean;
 import org.eventjuggler.services.idb.rest.LoginConfig.ProviderLoginConfig;
 import org.eventjuggler.services.simpleauth.rest.AuthenticationResponse;
 import org.eventjuggler.services.utils.UriBuilder;
@@ -63,7 +64,10 @@ import org.eventjuggler.services.utils.UriBuilder;
 public class LoginResource {
 
     @EJB
-    private IdentityProviderBean providerService;
+    private IdentityProviderBean providers;
+
+    @EJB
+    private IdentityProviderStateBean providerStates;
 
     @EJB
     private ApplicationBean as;
@@ -93,6 +97,29 @@ public class LoginResource {
     }
 
     @GET
+    @Path("{providerId}")
+    @Produces(MediaType.TEXT_HTML)
+    public Response getProviderLogin(@PathParam("appKey") String appKey, @PathParam("providerId") String providerId) {
+        Application application = getApplication(appKey);
+        IdentityProvider provider = providers.getProvider(providerId);
+
+        IdentityProviderCallback callback = new IdentityProviderCallback();
+        callback.setApplication(application);
+        callback.setHeaders(headers);
+        callback.setUriInfo(uriInfo);
+        callback.setProvider(provider);
+        callback.setProviderState(providerStates.getState(provider));
+
+        URI loginUrl = provider.getLoginUrl(callback);
+        if (loginUrl == null) {
+            URI uri = new UriBuilder(headers, uriInfo, "login.html?app=" + appKey + "&error=login_failed").build();
+            return Response.seeOther(uri).build();
+        } else {
+            return Response.seeOther(loginUrl).build();
+        }
+    }
+
+    @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getLoginConfig(@PathParam("appKey") String appKey) {
         Application application = getApplication(appKey);
@@ -103,16 +130,10 @@ public class LoginResource {
 
         List<ProviderLoginConfig> providerLoginConfigs = new LinkedList<>();
 
-        IdentityProviderCallback callback = new IdentityProviderCallback();
-        callback.setApplication(application);
-        callback.setHeaders(headers);
-        callback.setUriInfo(uriInfo);
-
         for (IdentityProviderConfig c : application.getProviders()) {
-            IdentityProvider provider = providerService.getProvider(c.getProviderId());
-            callback.setProvider(provider);
+            IdentityProvider provider = providers.getProvider(c.getProviderId());
 
-            URI loginUri = provider.getLoginUrl(callback);
+            URI loginUri = new UriBuilder(headers, uriInfo, "api/login/" + appKey + "/" + c.getProviderId()).build();
             URI iconUri = new UriBuilder(headers, uriInfo, "icons/" + provider.getIcon()).build();
 
             ProviderLoginConfig providerLoginConfig = new ProviderLoginConfig();

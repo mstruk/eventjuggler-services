@@ -24,6 +24,7 @@ package org.eventjuggler.services.idb.provider;
 import java.net.URI;
 import java.util.UUID;
 
+import org.jboss.logging.Logger;
 import org.picketlink.idm.model.SimpleUser;
 import org.picketlink.idm.model.User;
 
@@ -41,12 +42,11 @@ import com.google.api.services.oauth2.model.Userinfo;
  */
 public class GoogleProvider implements IdentityProvider {
 
+    private static final Logger log = Logger.getLogger(GoogleProvider.class);
+
     private static final JacksonFactory JSON_FACTORY = new JacksonFactory();
 
     private static final NetHttpTransport TRANSPORT = new NetHttpTransport();
-
-    // TODO This needs to be unique per client
-    private static final String state = UUID.randomUUID().toString();
 
     @Override
     public String getIcon() {
@@ -60,9 +60,15 @@ public class GoogleProvider implements IdentityProvider {
 
     @Override
     public URI getLoginUrl(IdentityProviderCallback callback) {
-        return callback.createUri("https://accounts.google.com/o/oauth2/auth").setQueryParam("client_id", callback.getProviderKey())
+        String state = UUID.randomUUID().toString();
+        callback.putState(state, null);
+
+        return callback
+                .createUri("https://accounts.google.com/o/oauth2/auth")
+                .setQueryParam("client_id", callback.getProviderKey())
                 .setQueryParam("response_type", "code")
-                .setQueryParam("scope", "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email")
+                .setQueryParam("scope",
+                        "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email")
                 .setQueryParam("redirect_uri", callback.getBrokerCallbackUrl().toString()).setQueryParam("state", state)
                 .build();
     }
@@ -78,10 +84,12 @@ public class GoogleProvider implements IdentityProvider {
 
         try {
             GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(TRANSPORT, JSON_FACTORY,
-                    callback.getProviderKey(), callback.getProviderSecret(), code, callback.getBrokerCallbackUrl().toString()).execute();
+                    callback.getProviderKey(), callback.getProviderSecret(), code, callback.getBrokerCallbackUrl().toString())
+                    .execute();
 
             GoogleCredential credential = new GoogleCredential.Builder().setJsonFactory(JSON_FACTORY).setTransport(TRANSPORT)
-                    .setClientSecrets(callback.getProviderKey(), callback.getProviderSecret()).build().setFromTokenResponse(tokenResponse);
+                    .setClientSecrets(callback.getProviderKey(), callback.getProviderSecret()).build()
+                    .setFromTokenResponse(tokenResponse);
 
             Oauth2 oauth2 = new Oauth2.Builder(TRANSPORT, JSON_FACTORY, credential).build();
 
@@ -92,21 +100,21 @@ public class GoogleProvider implements IdentityProvider {
             }
 
             Userinfo userInfo = oauth2.userinfo().get().execute();
-            User user = new SimpleUser(userInfo.getId());
+            User user = new SimpleUser(userInfo.getEmail());
             user.setFirstName(userInfo.getGivenName());
             user.setLastName(userInfo.getFamilyName());
             user.setEmail(userInfo.getEmail());
 
             return user;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.error("Failed to process callback", e);
+            return null;
         }
     }
 
     @Override
     public boolean isCallbackHandler(IdentityProviderCallback callback) {
-        return callback.containsQueryParam("code") && callback.containsQueryParam("state")
-                && callback.getQueryParam("state").equals(state);
+        return callback.containsQueryParam("state") && callback.containsState(callback.getQueryParam("state"));
     }
 
 }

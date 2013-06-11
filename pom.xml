@@ -9,7 +9,8 @@
     License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS 
     OF ANY KIND, either express or implied. See the License for the specific 
     language governing permissions and limitations under the License. -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -45,6 +46,8 @@
     </modules>
 
     <properties>
+        <version.com.google>1.14.1-beta</version.com.google>
+        <version.com.google.apis>v2-rev35-1.14.1-beta</version.com.google.apis>
         <version.net.sf.uadetector>2012.08</version.net.sf.uadetector>
         <version.org.hibernate.jpamodelgen>1.2.0.Final</version.org.hibernate.jpamodelgen>
         <version.org.jboss.arquillian>1.0.3.Final</version.org.jboss.arquillian>
@@ -52,8 +55,9 @@
         <version.org.jboss.arquillian.graphene2>2.0.0.Alpha4</version.org.jboss.arquillian.graphene2>
         <version.org.jboss.shrinkwrap.resolver>2.0.0-beta-3</version.org.jboss.shrinkwrap.resolver>
         <version.org.picketlink>2.5.0.Beta3</version.org.picketlink>
+        <version.org.twitter4j>3.0.3</version.org.twitter4j>
         <version.org.wildfly>8.0.0.Alpha1</version.org.wildfly>
-
+        
         <version.checkstyle.plugin>2.9.1</version.checkstyle.plugin>
         <version.compiler.plugin>2.3.1</version.compiler.plugin>
         <version.ear.plugin>2.7</version.ear.plugin>
@@ -63,9 +67,9 @@
         <version.war.plugin>2.1.1</version.war.plugin>
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        
+
         <maven.compiler.target>1.7</maven.compiler.target>
-        <maven.compiler.source>1.7</maven.compiler.source>        
+        <maven.compiler.source>1.7</maven.compiler.source>
     </properties>
 
     <scm>
@@ -130,7 +134,7 @@
                 <artifactId>ejs-identity-picketlink</artifactId>
                 <version>${project.version}</version>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.jboss.shrinkwrap.resolver</groupId>
                 <artifactId>shrinkwrap-resolver-bom</artifactId>
@@ -152,7 +156,7 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            
+
             <dependency>
                 <groupId>org.wildfly</groupId>
                 <artifactId>wildfly-dist</artifactId>
@@ -207,6 +211,27 @@
                 <groupId>org.picketlink</groupId>
                 <artifactId>picketlink-idm-schema</artifactId>
                 <version>${version.org.picketlink}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.api-client</groupId>
+                <artifactId>google-api-client</artifactId>
+                <version>${version.com.google}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.http-client</groupId>
+                <artifactId>google-http-client-jackson</artifactId>
+                <version>1.14.1-beta</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.apis</groupId>
+                <artifactId>google-api-services-oauth2</artifactId>
+                <version>${version.com.google.apis}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.twitter4j</groupId>
+                <artifactId>twitter4j-core</artifactId>
+                <version>${version.org.twitter4j}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

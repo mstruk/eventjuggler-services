@@ -42,6 +42,24 @@ public class IdentityProviderCallback {
 
     private IdentityProvider provider;
 
+    private IdentityProviderState providerState;
+
+    public boolean containsState(String key) {
+        return providerState.contains(key);
+    }
+
+    public <T> T getState(String key) {
+        return providerState.remove(key);
+    }
+
+    public void putState(String key, Object value) {
+        providerState.put(key, value);
+    }
+
+    public void setProviderState(IdentityProviderState providerState) {
+        this.providerState = providerState;
+    }
+
     private UriInfo uriInfo;
 
     public boolean containsHeader(String key) {

@@ -42,6 +42,7 @@ import org.eventjuggler.services.idb.model.Application;
 import org.eventjuggler.services.idb.provider.IdentityProvider;
 import org.eventjuggler.services.idb.provider.IdentityProviderCallback;
 import org.eventjuggler.services.idb.provider.IdentityProviderBean;
+import org.eventjuggler.services.idb.provider.IdentityProviderStateBean;
 import org.eventjuggler.services.utils.UriBuilder;
 import org.picketlink.idm.model.Attribute;
 import org.picketlink.idm.model.User;
@@ -66,7 +67,10 @@ public class CallbackResource {
     private UriInfo uriInfo;
 
     @EJB
-    private IdentityProviderBean providerService;
+    private IdentityProviderBean providers;
+
+    @EJB
+    private IdentityProviderStateBean providerStates;
 
     @GET
     public Response callback(@PathParam("appKey") String appKey) throws URISyntaxException {
@@ -80,11 +84,15 @@ public class CallbackResource {
         callback.setHeaders(headers);
         callback.setUriInfo(uriInfo);
 
-        for (IdentityProvider provider : providerService.getProviders()) {
+        for (IdentityProvider provider : providers.getProviders()) {
             callback.setProvider(provider);
+            callback.setProviderState(providerStates.getState(provider));
 
             if (provider.isCallbackHandler(callback)) {
                 User user = provider.processCallback(callback);
+                if (user == null) {
+                    break;
+                }
 
                 String providerUsername = user.getLoginName();
                 String providerUsernameKey = provider.getId() + ".username";
