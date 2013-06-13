@@ -25,6 +25,10 @@
 
 <body ng-controller="GlobalCtrl">
 
+    <div class="alert-container" ng-show="notification" ng-click="notification = null">
+        <div class="alert alert-{{notification.type}}">{{notification.message}}</div>
+    </div>
+        
     <div id="wrap">
         <div ng-include src="'partials/menu.html'"></div>
 

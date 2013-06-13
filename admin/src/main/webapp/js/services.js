@@ -2,6 +2,37 @@
 
 var eventjugglerServices = angular.module('eventjugglerAdminServices', [ 'ngResource' ]);
 
+eventjugglerServices.factory('Notifications', function($rootScope, $timeout) {
+    var notifications = {};
+
+    var scheduled = null;
+    var schedulePop = function() {
+        if (scheduled) {
+            $timeout.cancel(scheduled);
+        }
+        
+        scheduled = $timeout(function() {
+            $rootScope.notification = null;
+            scheduled = null;
+        }, 3000);
+    };
+
+    if (!$rootScope.notifications) {
+        $rootScope.notifications = [];
+    }
+
+    notifications.success = function(message) {
+        $rootScope.notification = {
+            type : "success",
+            message : message
+        };
+
+        schedulePop();
+    };
+
+    return notifications;
+});
+
 eventjugglerServices.factory('Application', function($resource) {
     return $resource('/ejs-identity/api/admin/applications/:key', {
         key : '@key'
@@ -181,9 +212,9 @@ eventjugglerServices.factory('ActivitiesEventsLoader', function(Activities, $q) 
 eventjugglerServices.service('Auth', function($resource, $http, $location, $routeParams) {
     var auth = {};
     auth.user = {};
-    
+
     var parameters = window.location.search.substring(1).split("&");
-    for (var i = 0; i < parameters.length; i++) {
+    for ( var i = 0; i < parameters.length; i++) {
         var param = parameters[i].split("=");
         if (decodeURIComponent(param[0]) == "token") {
             auth.token = decodeURIComponent(param[1]);

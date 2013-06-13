@@ -9,21 +9,24 @@
                 <span class="gray" ng-hide="create">{{user.userId}}</span>
             </h1>
 
-            <form class="form-horizontal" name="userForm">
+            <p class="subtitle subtitle-right"><span class="required">*</span> Required fields</p>
+
+            <form class="form-horizontal" name="userForm" novalidate>
                 <fieldset>
                     <legend>Details</legend>
                     <div class="control-group">
-                        <label class="control-label" for="name">Username </label>
+                        <label class="control-label" for="name">Username <span class="required">*</span></label>
                         <div class="controls">
-                            <input type="text" class="input-xlarge" id="name" ng-model="user.userId" autofocus required ng-show="create">
-                            <input type="text" class="input-xlarge" id="name" ng-model="user.userId" required ng-hide="create" readonly>
+                            <input type="text" class="input-xlarge" id="name" name="name" ng-model="user.userId" autofocus required ng-readonly="!create">
+                            <span class="help-inline error" ng-show="userForm.showErrors && userForm.name.$invalid">Required</span>
                         </div>
                     </div>
 
                     <div class="control-group">
                         <label class="control-label" for="email">Email </label>
                         <div class="controls">
-                            <input type="email" class="input-xlarge" id="email" ng-model="user.email">
+                            <input type="email" class="input-xlarge" id="email" name="email" ng-model="user.email">
+                            <span class="help-inline error" ng-show="userForm.showErrors && userForm.email.$invalid">Invalid email</span>
                         </div>
                     </div>
 
@@ -42,9 +45,10 @@
                     </div>
 
                     <div class="control-group">
-                        <label class="control-label" for="password">Password </label>
+                        <label class="control-label" for="password">Password <span class="required">*</span></label>
                         <div class="controls">
-                            <input type="password" class="input-xlarge" id="password" ng-model="user.password" ng-required="create">
+                            <input type="password" class="input-xlarge" id="password" name="password" ng-model="user.password" ng-required="create">
+                            <span class="help-inline error" ng-show="userForm.showErrors && userForm.password.$invalid">Required</span>
                         </div>
                     </div>
                 </fieldset>
@@ -73,7 +77,8 @@
 
                 <div class="form-actions" ng-show="!create">
                     <button type="submit" ng-click="save()" class="btn btn-primary" ng-show="changed">Save changes</button>
-                    <button type="submit" ng-click="reset()" class="btn" ng-show="changed">Reset changes</button>
+                    <button type="submit" ng-click="reset()" class="btn" ng-show="changed">Clear changes</button>
+                    <a href="#/realms/{{realm.name}}/users" ng-hide="changed">View users &#187;</a>
                     <button type="submit" ng-click="remove()" class="btn btn-danger" ng-hide="changed">Delete</button>
                 </div>
                 

@@ -8,22 +8,23 @@
                 <span class="gray" ng-show="create">New Realm</span>
                 <span class="gray" ng-hide="create">{{realm.name}}</span> configuration
             </h1>
+            
+            <p class="subtitle subtitle-right"><span class="required">*</span> Required fields</p>
 
-            <form class="form-horizontal" name="realmForm">
+            <form class="form-horizontal" name="realmForm" novalidate>
                 <fieldset>
                     <legend>Details</legend>
                     <div class="control-group">
-                        <label class="control-label" for="name">Name </label>
+                        <label class="control-label" for="name">Name <span class="required">*</span></label>
                         <div class="controls">
-                            <input type="text" class="input-xlarge" id="name" ng-model="realm.name" autofocus required ng-show="create">
-                            <input type="text" class="input-xlarge" id="name" ng-model="realm.name" required ng-hide="create" readonly>
+                            <input type="text" class="input-xlarge" id="name" name="name" ng-model="realm.name" autofocus required>
+                            <span class="help-inline error" ng-show="realmForm.showErrors && realmForm.name.$invalid">Required</span>
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="key">Key </label>
                         <div class="controls">
-                            <input class="input-xxlarge" type="text" id="key" ng-model="realm.key" ng-show="auth.root && create">
-                            <input class="input-xxlarge" type="text" id="key" ng-model="realm.key" readonly ng-show="!(auth.root && create)">
+                            <input class="input-xxlarge" type="text" id="key" name="key" ng-model="realm.key" ng-readonly="!(auth.root && create)">
                         </div>
                     </div>
                     <div class="control-group" ng-show="auth.root">
@@ -41,7 +42,8 @@
 
                 <div class="form-actions" ng-show="!create">
                     <button type="submit" ng-click="save()" class="btn btn-primary" ng-show="changed">Save changes</button>
-                    <button type="submit" ng-click="reset()" class="btn" ng-show="changed">Reset changes</button>
+                    <button type="submit" ng-click="reset()" class="btn" ng-show="changed">Clear changes</button>
+                    <a href="#/realms" ng-hide="changed">View realms &#187;</a>
                     <button type="submit" ng-click="remove()" class="btn btn-danger" ng-hide="changed">Delete</button>
                 </div>
                 

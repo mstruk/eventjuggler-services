@@ -1,6 +1,11 @@
 'use strict';
 
-function GlobalCtrl($scope, Auth, $location) {
+function GlobalCtrl($scope, Auth, $location, Notifications) {
+    
+    $scope.addMessage = function() {
+        Notifications.success("test");
+    };
+    
     $scope.auth = Auth;
 
     $scope.$watch(function() {
@@ -22,12 +27,12 @@ function ApplicationListCtrl($scope, applications) {
     $scope.applications = applications;
 }
 
-function ApplicationDetailCtrl($scope, applications, application, Application, realms, providers, $location, $window) {
+function ApplicationDetailCtrl($scope, applications, application, Application, realms, providers, $location, $window, $dialog, Notifications) {
     $scope.application = angular.copy(application);
     $scope.applications = applications;
     $scope.realms = realms;
     $scope.providers = providers;
-    
+
     $scope.callbackUrl = $window.location.origin + "/ejs-identity/api/callback/" + application.key;
 
     $scope.create = !application.key;
@@ -47,6 +52,7 @@ function ApplicationDetailCtrl($scope, applications, application, Application, r
                     var l = headers().location;
                     var key = l.substring(l.lastIndexOf("/") + 1);
                     $location.url("/applications/" + key);
+                    Notifications.success("Created application");
                 });
             } else {
                 Application.update($scope.application, function() {
@@ -55,14 +61,18 @@ function ApplicationDetailCtrl($scope, applications, application, Application, r
                     if ($scope.create) {
                         $location.url("/applications/" + $scope.application.key);
                     }
+                    Notifications.success("Saved changes to the application");
                 });
             }
+        } else {
+            $scope.applicationForm.showErrors = true;
         }
     };
 
     $scope.reset = function() {
         $scope.application = angular.copy(application);
         $scope.changed = false;
+        $scope.applicationForm.showErrors = false;
     };
 
     $scope.cancel = function() {
@@ -70,8 +80,24 @@ function ApplicationDetailCtrl($scope, applications, application, Application, r
     };
 
     $scope.remove = function() {
-        $scope.application.$remove(function() {
-            $location.url("/applications");
+        var title = 'Delete ' + $scope.application.name;
+        var msg = 'Are you sure you want to permanently delete this application?';
+        var btns = [ {
+            result : 'cancel',
+            label : 'Cancel'
+        }, {
+            result : 'ok',
+            label : 'Delete this application',
+            cssClass : 'btn-primary'
+        } ];
+
+        $dialog.messageBox(title, msg, btns).open().then(function(result) {
+            if (result == "ok") {
+                $scope.application.$remove(function() {
+                    $location.url("/applications");
+                    Notifications.success("Deleted application");
+                });
+            }
         });
     };
 
@@ -119,16 +145,16 @@ function ApplicationDetailCtrl($scope, applications, application, Application, r
             }
         }
     };
-    
+
     $scope.openHelp = function(i) {
         $scope.providerHelpModal = true;
         $scope.providerHelp = {};
         $scope.providerHelp.index = i;
         $scope.providerHelp.description = $scope.getProviderDescription($scope.application.providers[i].providerId);
     };
-    
+
     $scope.closeHelp = function() {
-        $scope.providerHelpModal = false; 
+        $scope.providerHelpModal = false;
         $scope.providerHelp = null;
     };
 
@@ -145,7 +171,7 @@ function UserListCtrl($scope, realms, realm, users) {
     $scope.users = users;
 }
 
-function UserDetailCtrl($scope, realms, realm, user, User, $location) {
+function UserDetailCtrl($scope, realms, realm, user, User, $location, $dialog, Notifications) {
     $scope.realms = realms;
     $scope.realm = realm;
     $scope.user = angular.copy(user);
@@ -169,14 +195,20 @@ function UserDetailCtrl($scope, realms, realm, user, User, $location) {
 
                 if ($scope.create) {
                     $location.url("/realms/" + realm.key + "/users/" + user.userId);
+                    Notifications.success("Created user");
+                } else {
+                    Notifications.success("Saved changes to user");
                 }
             });
+        } else {
+            $scope.userForm.showErrors = true;
         }
     };
 
     $scope.reset = function() {
         $scope.user = angular.copy(user);
         $scope.changed = false;
+        $scope.userForm.showErrors = false;
     };
 
     $scope.cancel = function() {
@@ -184,16 +216,32 @@ function UserDetailCtrl($scope, realms, realm, user, User, $location) {
     };
 
     $scope.remove = function() {
-        $scope.user.$remove({
-            realmKey : realm.key,
-            userId : $scope.user.userId
-        }, function() {
-            $location.url("/realms/" + realm.key + "/users");
+        var title = 'Delete ' + $scope.user.userId;
+        var msg = 'Are you sure you want to permanently delete this user?';
+        var btns = [ {
+            result : 'cancel',
+            label : 'Cancel'
+        }, {
+            result : 'ok',
+            label : 'Delete this user',
+            cssClass : 'btn-primary'
+        } ];
+
+        $dialog.messageBox(title, msg, btns).open().then(function(result) {
+            if (result == "ok") {
+                $scope.user.$remove({
+                    realmKey : realm.key,
+                    userId : $scope.user.userId
+                }, function() {
+                    $location.url("/realms/" + realm.key + "/users");
+                    Notifications.success("Deleted user");
+                });
+            }
         });
     };
 }
 
-function RealmDetailCtrl($scope, Realm, realms, realm, $location) {
+function RealmDetailCtrl($scope, Realm, realms, realm, $location, $dialog, Notifications) {
     $scope.realms = realms;
     $scope.realm = angular.copy(realm);
     $scope.create = !realm.name;
@@ -213,6 +261,7 @@ function RealmDetailCtrl($scope, Realm, realms, realm, $location) {
                     var l = headers().location;
                     var key = l.substring(l.lastIndexOf("/") + 1);
                     $location.url("/realms/" + key);
+                    Notifications.success("Created realm");
                 });
             } else {
                 Realm.update($scope.realm, function() {
@@ -220,15 +269,21 @@ function RealmDetailCtrl($scope, Realm, realms, realm, $location) {
                     realm = angular.copy($scope.realm);
                     if ($scope.create) {
                         $location.url("/realms/" + $scope.realm.key);
+                        Notifications.success("Created realm");
+                    } else {
+                        Notifications.success("Saved changes to realm");
                     }
                 });
             }
+        } else {
+            $scope.realmForm.showErrors = true;
         }
     };
 
     $scope.reset = function() {
-        $scope.user = angular.copy(user);
+        $scope.realm = angular.copy(realm);
         $scope.changed = false;
+        $scope.realmForm.showErrors = false;
     };
 
     $scope.cancel = function() {
@@ -236,8 +291,24 @@ function RealmDetailCtrl($scope, Realm, realms, realm, $location) {
     };
 
     $scope.remove = function() {
-        Realm.remove($scope.realm, function() {
-            $location.url("/realms");
+        var title = 'Delete ' + $scope.realm.name;
+        var msg = 'Are you sure you want to permanently delete this realm?';
+        var btns = [ {
+            result : 'cancel',
+            label : 'Cancel'
+        }, {
+            result : 'ok',
+            label : 'Delete this realm',
+            cssClass : 'btn-primary'
+        } ];
+
+        $dialog.messageBox(title, msg, btns).open().then(function(result) {
+            if (result == "ok") {
+                Realm.remove($scope.realm, function() {
+                    $location.url("/realms");
+                    Notifications.success("Deleted realm");                    
+                });
+            }
         });
     };
 }

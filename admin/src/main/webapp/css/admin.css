@@ -1018,11 +1018,16 @@ footer .caret-inverted {border-bottom-color: #666;}
 .alert-container {
 	position: fixed;
 	top: 25px;
-	text-align: center;
-	left: 0;
-	width: 100%;
-	z-index: 1040;
+	left: 50%;
+	width: 451px;
+	margin-left: -225px;
+	z-index: 2000;
 }
+
+.alert-container .alert {
+    width: 400px;
+        z-index: 2000;
+    }
 
 .alert {
 	padding-top: 3px;
@@ -1236,5 +1241,26 @@ select.attribute {width: 105px;}
 
 
 
+.required {
+	font-weight: bold;
+	color: #b81616;
+}
 
+label.control-label {position: relative;}
 
+.control-label .required {
+	position: absolute; 
+	right: -12px
+}
+
+.subtitle-right {
+    float: right;
+}
+
+.help-inline.error {
+    color: #b94a48;
+}
+
+.form-actions a {
+    margin-right: 1em;
+}
