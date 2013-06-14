@@ -9,6 +9,7 @@
                 <span class="gray" ng-hide="create">{{user.userId}}</span>
             </h1>
 
+            <div ng-show="userForm.showErrors && userForm.$error.required" class="alert alert-error">Please fill in all required fields</div>
             <p class="subtitle subtitle-right"><span class="required">*</span> Required fields</p>
 
             <form class="form-horizontal" name="userForm" novalidate>
@@ -18,7 +19,6 @@
                         <label class="control-label" for="name">Username <span class="required">*</span></label>
                         <div class="controls">
                             <input type="text" class="input-xlarge" id="name" name="name" ng-model="user.userId" autofocus required ng-readonly="!create">
-                            <span class="help-inline error" ng-show="userForm.showErrors && userForm.name.$invalid">Required</span>
                         </div>
                     </div>
 
@@ -48,7 +48,6 @@
                         <label class="control-label" for="password">Password <span class="required">*</span></label>
                         <div class="controls">
                             <input type="password" class="input-xlarge" id="password" name="password" ng-model="user.password" ng-required="create">
-                            <span class="help-inline error" ng-show="userForm.showErrors && userForm.password.$invalid">Required</span>
                         </div>
                     </div>
                 </fieldset>
