@@ -32,6 +32,8 @@ Then start with:
 
     dist/target/ejs-<PROJECT VERSION>/bin/standalone.sh
 
+Note: documentation is available in dist/target - to set the URL for the SaaS installation of EJS use "-Dejs.saas.url=<base url>" when building the distribution
+
 
 Testsuite
 =========

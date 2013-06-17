@@ -41,8 +41,6 @@
 
         <ejs.dist.download.url>http://ejs-download-url</ejs.dist.download.url>
         <ejs.saas.url>https://ejs-saas-url</ejs.saas.url>
-        <ejs.saas.root.username>root</ejs.saas.root.username>
-        <ejs.saas.root.password>root</ejs.saas.root.password>
     </properties>
 
     <profiles>
