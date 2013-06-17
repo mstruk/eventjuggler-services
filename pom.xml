@@ -42,6 +42,7 @@
         <module>ear</module>
         <module>identity-api</module>
         <module>identity-impl</module>
+        <module>identity-picketlink</module>
         <module>testsuite</module>
     </modules>
 
